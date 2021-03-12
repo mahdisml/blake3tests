@@ -66,6 +66,6 @@ fun main() {
     println("sha512 = $sha512Time ms")
     println("blake3Native = $blake3NativeTime ms".padEnd(30))
     println("blake3Java = $blake3JavaTime ms".padEnd(30))
-    println("black3KotlinFromJava = $blake3JavaTime ms".padEnd(30))
+    println("blake3KotlinFromJava = $blake3JavaTime ms".padEnd(30))
 
 }
