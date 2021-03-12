@@ -24,8 +24,8 @@ fun main() {
     var sha512Time: Long = -1
     var blake3NativeTime: Long = -1
     var blake3JavaTime: Long = -1
-    
-    repeat(1) {
+
+    repeat(17) {
         sha1Time = measureTimeMillis {
             for (entry in entries) {
                 sha1.hashBytes(entry).asBytes()
@@ -56,7 +56,7 @@ fun main() {
     println("sha1   = $sha1Time ms")
     println("sha256 = $sha256Time ms")
     println("sh512 = $sha512Time ms")
-    println("blake3 = $blake3NativeTime ms".padEnd(30))
-    println("blake3java = $blake3JavaTime ms".padEnd(30))
+    println("blake3Native = $blake3NativeTime ms".padEnd(30))
+    println("blake3Java = $blake3JavaTime ms".padEnd(30))
 
 }
