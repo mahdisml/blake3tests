@@ -6,7 +6,7 @@ import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 import java.util.*
 
-class Blake3KotlinFromJava {
+class Blake3KotlinOptimizing {
     // Node of the Blake3 hash tree
     // Is either chained into the next node using chainingValue()
     // Or used to calculate the hash digest using rootOutputBytes()
@@ -19,10 +19,7 @@ class Blake3KotlinFromJava {
     ) {
         // Return the 8 int CV
         fun chainingValue(): IntArray {
-            return Arrays.copyOfRange(
-                compress(inputChainingValue, blockWords, counter, blockLen, flags),
-                0, 8
-            )
+            return compress(inputChainingValue, blockWords, counter, blockLen, flags).copyOfRange(0, 8)
         }
 
         fun rootOutputBytes(outLen: Int): IntArray {
@@ -74,10 +71,13 @@ class Blake3KotlinFromJava {
                 // Chain the next 64 byte block into this chunk/node
                 if (blockLen == BLOCK_LEN) {
                     val blockWords = wordsFromLEBytes(block)
-                    chainingValue = Arrays.copyOfRange(
-                        compress(chainingValue, blockWords, chunkCounter, BLOCK_LEN, flags or startFlag()),
-                        0, 8
-                    )
+                    chainingValue = compress(
+                        chainingValue,
+                        blockWords,
+                        chunkCounter,
+                        BLOCK_LEN,
+                        flags or startFlag()
+                    ).copyOfRange(0, 8)
                     blocksCompressed += 1
                     block = IntArray(BLOCK_LEN)
                     blockLen = 0
@@ -85,7 +85,7 @@ class Blake3KotlinFromJava {
 
                 // Take bytes out of the input and update
                 val want = BLOCK_LEN - blockLen // How many bytes we need to fill up the current block
-                val canTake = Math.min(want, input.size - currPos)
+                val canTake = want.coerceAtMost(input.size - currPos)
                 System.arraycopy(input, currPos, block, blockLen, canTake)
                 blockLen += canTake
                 currPos += canTake
@@ -116,7 +116,7 @@ class Blake3KotlinFromJava {
     }
 
     private constructor(context: String) {
-        val contextHasher = Blake3KotlinFromJava()
+        val contextHasher = Blake3KotlinOptimizing()
         contextHasher.initialize(IV, DERIVE_KEY_CONTEXT)
         contextHasher.update(byteArrayToIntArray(context.toByteArray(StandardCharsets.UTF_8)))
         val contextKey = wordsFromLEBytes(contextHasher.digest())
@@ -135,7 +135,7 @@ class Blake3KotlinFromJava {
      * @throws IOException If the file does not exist
      */
     @Throws(IOException::class)
-    fun update(file: File?) {
+    fun update(file: File) {
         // Update the hasher 4kb at a time to avoid memory issues when hashing large files
         FileInputStream(file).use { ios ->
             val buffer = IntArray(4096)
@@ -144,7 +144,7 @@ class Blake3KotlinFromJava {
                 if (read == buffer.size) {
                     update(buffer)
                 } else {
-                    update(Arrays.copyOfRange(buffer, 0, read))
+                    update(buffer.copyOfRange(0, read))
                 }
             }
         }
@@ -166,8 +166,8 @@ class Blake3KotlinFromJava {
                 chunkState = ChunkState(key, totalChunks, flags)
             }
             val want = CHUNK_LEN - chunkState!!.len()
-            val take = Math.min(want, input.size - currPos)
-            chunkState!!.update(Arrays.copyOfRange(input, currPos, currPos + take))
+            val take = want.coerceAtMost(input.size - currPos)
+            chunkState!!.update(input.copyOfRange(currPos, currPos + take))
             currPos += take
         }
     }
@@ -222,9 +222,9 @@ class Blake3KotlinFromJava {
         return cvStack[cvStackLen]
     }
 
-    private fun addChunkChainingValue(newCV: IntArray, totalChunks: Long) {
-        var newCV = newCV
-        var totalChunks = totalChunks
+    private fun addChunkChainingValue(argNewCV: IntArray, argTotalChunks: Long) {
+        var newCV = argNewCV
+        var totalChunks = argTotalChunks
         while (totalChunks and 1 == 0L) {
             newCV = parentCV(popStack(), newCV, key, flags)
             totalChunks = totalChunks shr 1
@@ -296,12 +296,12 @@ class Blake3KotlinFromJava {
 
         private fun compress(
             chainingValue: IntArray,
-            blockWords: IntArray,
+            argBlockWords: IntArray,
             counter: Long,
             blockLen: Int,
             flags: Int
         ): IntArray {
-            var blockWords = blockWords
+            var blockWords = argBlockWords
             val counterInt = (counter and 0xffffffffL).toInt()
             val counterShift = (counter shr 32 and 0xffffffffL).toInt()
             val state = intArrayOf(
@@ -383,8 +383,8 @@ class Blake3KotlinFromJava {
         /**
          * Construct a BLAKE3 blake3 hasher
          */
-        fun newInstance(): Blake3KotlinFromJava {
-            return Blake3KotlinFromJava()
+        fun newInstance(): Blake3KotlinOptimizing {
+            return Blake3KotlinOptimizing()
         }
 
         /**
@@ -392,9 +392,9 @@ class Blake3KotlinFromJava {
          * @param key The 32 byte key
          * @throws IllegalStateException If the key is not 32 bytes
          */
-        fun newKeyedHasher(key: IntArray): Blake3KotlinFromJava {
+        fun newKeyedHasher(key: IntArray): Blake3KotlinOptimizing {
             check(key.size == KEY_LEN) { "Invalid key length" }
-            return Blake3KotlinFromJava(key)
+            return Blake3KotlinOptimizing(key)
         }
 
         /**
@@ -404,15 +404,8 @@ class Blake3KotlinFromJava {
          * eg "example.com 2019-12-25 16:18:03 session tokens v1"
          * @param context Context string used to derive keys.
          */
-        fun newKeyDerivationHasher(context: String): Blake3KotlinFromJava {
-            return Blake3KotlinFromJava(context)
-        }
-        private fun byteArrayToIntArray(byteArray:ByteArray):IntArray{
-            val result = IntArray(byteArray.size)
-            byteArray.mapIndexed { index, byte ->
-                result[index] = byte.toInt()
-            }
-            return result
+        fun newKeyDerivationHasher(context: String): Blake3KotlinOptimizing {
+            return Blake3KotlinOptimizing(context)
         }
         private fun intArrayToByteArray(intArray:IntArray):ByteArray{
             val result = ByteArray(intArray.size)
@@ -426,7 +419,7 @@ class Blake3KotlinFromJava {
     private fun byteArrayToIntArray(byteArray:ByteArray):IntArray{
         val result = IntArray(byteArray.size)
         byteArray.mapIndexed { index, byte ->
-           result[index] = byte.toInt()
+            result[index] = byte.toInt()
         }
         return result
     }

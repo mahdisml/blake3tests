@@ -8,7 +8,7 @@ import kotlin.system.measureTimeMillis
 
 
 fun main() {
-    val entries = List(300) {
+    val entries = List(257) {
         val x = it + 1000
         Random.Default.nextBytes(x * it + 2000)
     }
@@ -19,7 +19,8 @@ fun main() {
     val blake3Native = NativeBLAKE3()
     blake3Native.initDefault()
     val blake3Java = Blake3.newInstance();
-    val black3KotlinFromJava = Blake3KotlinFromJava.newInstance()
+    val blake3KotlinFromJava = Blake3KotlinOptimizing.newInstance()
+    val blake3KotlinOptimizing = Blake3KotlinOptimizing.newInstance()
 
     var sha1Time: Long = -1
     var sha256Time: Long = -1
@@ -27,8 +28,9 @@ fun main() {
     var blake3NativeTime: Long = -1
     var blake3JavaTime: Long = -1
     var blake3KotlinFromJavaTime: Long = -1
+    var blake3KotlinOptimizingTime: Long = -1
 
-    repeat(3) {
+    repeat(17) {
         sha1Time = measureTimeMillis {
             for (entry in entries) {
                 sha1.hashBytes(entry).asBytes()
@@ -56,7 +58,12 @@ fun main() {
         }
         blake3KotlinFromJavaTime = measureTimeMillis {
             for (entry in entries) {
-                black3KotlinFromJava.update(entry)
+                blake3KotlinFromJava.update(entry)
+            }
+        }
+        blake3KotlinOptimizingTime = measureTimeMillis {
+            for (entry in entries) {
+                blake3KotlinOptimizing.update(entry)
             }
         }
     }
@@ -66,6 +73,27 @@ fun main() {
     println("sha512 = $sha512Time ms")
     println("blake3Native = $blake3NativeTime ms".padEnd(30))
     println("blake3Java = $blake3JavaTime ms".padEnd(30))
-    println("blake3KotlinFromJava = $blake3JavaTime ms".padEnd(30))
+    println("blake3KotlinFromJava = $blake3KotlinFromJavaTime ms".padEnd(30))
+    println("blake3KotlinOptimizing = $blake3KotlinOptimizingTime ms".padEnd(30))
+    println("--------------------------------------------------")
+    println("blake3Native = ${blake3Native.output.size}")
+    blake3Native.output.map {
+        print(it)
+    }
+    println()
+    println("blake3Java = ${blake3Java.digest().size}")
+    blake3Java.digest().map {
+        print(it)
+    }
+    println()
+    println("blake3KotlinFromJava = ${blake3KotlinFromJava.digest().size}")
+    blake3KotlinFromJava.digest().map {
+        print(it)
+    }
+    println()
+    println("blake3KotlinOptimizing = ${blake3KotlinOptimizing.digest().size}")
+    blake3KotlinOptimizing.digest().map {
+        print(it)
+    }
 
 }
