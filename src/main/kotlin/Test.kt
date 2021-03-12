@@ -6,8 +6,9 @@ import io.lktk.NativeBLAKE3
 import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
+
 fun main() {
-    val entries = List(777) {
+    val entries = List(300) {
         val x = it + 1000
         Random.Default.nextBytes(x * it + 2000)
     }
@@ -18,14 +19,16 @@ fun main() {
     val blake3Native = NativeBLAKE3()
     blake3Native.initDefault()
     val blake3Java = Blake3.newInstance();
+    val black3KotlinFromJava = Blake3KotlinFromJava.newInstance()
 
     var sha1Time: Long = -1
     var sha256Time: Long = -1
     var sha512Time: Long = -1
     var blake3NativeTime: Long = -1
     var blake3JavaTime: Long = -1
+    var blake3KotlinFromJavaTime: Long = -1
 
-    repeat(17) {
+    repeat(3) {
         sha1Time = measureTimeMillis {
             for (entry in entries) {
                 sha1.hashBytes(entry).asBytes()
@@ -51,12 +54,18 @@ fun main() {
                 blake3Java.update(entry)
             }
         }
+        blake3KotlinFromJavaTime = measureTimeMillis {
+            for (entry in entries) {
+                black3KotlinFromJava.update(entry)
+            }
+        }
     }
 
     println("sha1   = $sha1Time ms")
     println("sha256 = $sha256Time ms")
-    println("sh512 = $sha512Time ms")
+    println("sha512 = $sha512Time ms")
     println("blake3Native = $blake3NativeTime ms".padEnd(30))
     println("blake3Java = $blake3JavaTime ms".padEnd(30))
+    println("black3KotlinFromJava = $blake3JavaTime ms".padEnd(30))
 
 }
