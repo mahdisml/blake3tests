@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.4.21"
+    kotlin("plugin.serialization") version "1.4.21"
 }
 
 group = "me.mahdi"
@@ -20,7 +21,8 @@ dependencies {
     api("com.google.guava:guava:30.1-jre")
     implementation("io.lktk:blake3jni:0.2.2")
     implementation(group = "io.github.rctcwyvrn",name = "blake3" , version = "1.3")
-
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.1")
 }
 
 tasks.withType<KotlinCompile>() {

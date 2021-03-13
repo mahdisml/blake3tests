@@ -21,6 +21,7 @@ fun main() {
     val blake3Java = Blake3.newInstance();
     val blake3KotlinFromJava = Blake3KotlinOptimizing.newInstance()
     val blake3KotlinOptimizing = Blake3KotlinOptimizing.newInstance()
+    val smlblake3 = SMLBLAKE3.newInstance()
 
     var sha1Time: Long = -1
     var sha256Time: Long = -1
@@ -29,6 +30,7 @@ fun main() {
     var blake3JavaTime: Long = -1
     var blake3KotlinFromJavaTime: Long = -1
     var blake3KotlinOptimizingTime: Long = -1
+    var smlblake3Time: Long = -1
 
     repeat(17) {
         sha1Time = measureTimeMillis {
@@ -66,6 +68,11 @@ fun main() {
                 blake3KotlinOptimizing.update(entry)
             }
         }
+        smlblake3Time = measureTimeMillis {
+            for (entry in entries) {
+                smlblake3.update(entry)
+            }
+        }
     }
 
     println("sha1   = $sha1Time ms")
@@ -75,6 +82,7 @@ fun main() {
     println("blake3Java = $blake3JavaTime ms".padEnd(30))
     println("blake3KotlinFromJava = $blake3KotlinFromJavaTime ms".padEnd(30))
     println("blake3KotlinOptimizing = $blake3KotlinOptimizingTime ms".padEnd(30))
+    println("smlblake3 = $smlblake3Time ms".padEnd(30))
     println("--------------------------------------------------")
     println("blake3Native = ${blake3Native.output.size}")
     blake3Native.output.map {
@@ -93,6 +101,11 @@ fun main() {
     println()
     println("blake3KotlinOptimizing = ${blake3KotlinOptimizing.digest().size}")
     blake3KotlinOptimizing.digest().map {
+        print(it)
+    }
+    println()
+    println("smlblake3 = ${smlblake3.digest().size}")
+    smlblake3.digest().map {
         print(it)
     }
 
